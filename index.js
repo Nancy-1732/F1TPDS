@@ -1,9 +1,10 @@
-const Auto = require('./Auto');
-const Piloto = require('./Piloto');
-const Escuderia = require('./Escuderia');
-const Carrera = require('./Carrera');
-const Circuito = require('./Circuito');
-const Estrategia = require('./Estrategia');
+const Auto = require('./entities/Auto');
+const Piloto = require('./entities/Piloto');
+const Escuderia = require('./entities/Escuderia');
+const Carrera = require('./entities/Carrera');
+const Circuito = require('./entities/Circuito');
+const Estrategia = require('./entities/Estrategia');
+
 
 try {
     // Crear circuito con condiciones climáticas
