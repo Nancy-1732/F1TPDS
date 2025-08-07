@@ -4,7 +4,7 @@ class Carrera {
         this.circuito = circuito;
         this.fecha = fecha;
         this.autosParticipantes = [];
-        this.condicionesClimaticas = null;
+        this.condicionesClimaticas = {};
         this.numeroVueltas = 0;
         this.resultados = [];
         this.clasificacion = {
@@ -30,8 +30,18 @@ class Carrera {
      * //   condicionesClimaticas: { clima: "seco", temperatura: 25, humedad: 40 }
      * // }
      */
+
+    cambiarClima() {
+        this.condicionesClimaticas.clima = this.circuito.condicionesClimaticas.clima;
+        this.condicionesClimaticas.temperatura = this.circuito.condicionesClimaticas.temperatura;
+        this.condicionesClimaticas.humedad = this.circuito.condicionesClimaticas.humedad; 
+    }
+
     iniciarCarrera() {
-        // Implementar lógica para iniciar la carrera
+        cambiarClima();
+        if (this.esValida()) {
+            
+        }
     }
 
     /**
@@ -49,8 +59,18 @@ class Carrera {
      * const esValida = carrera.esValida();
      * // Returns: true
      */
+    validarClima() {
+        return Object.keys(this.condicionesClimaticas).length === 0;
+    }
+
+    validarFecha() {
+        const [aa, mm, dd] = this.fecha.split("-").map(Number);
+        let fecha = new Date(aa, mm - 1, dd);
+        return (fecha.getMonth() >= 0 && fecha.getMonth() <= 11) && (fecha.getDate() >= 1 && fecha.getDate() <= 31);
+    }
+
     esValida() {
-        // Implementar lógica para validar la carrera
+        return this.autosParticipantes.length >= 10 && this.circuito.ubicacion != null && !validarClima() && validarFecha();
     }
 
     /**
@@ -62,8 +82,79 @@ class Carrera {
      * const vueltas = carrera.calcularNumeroVueltas();
      * // Returns: 78 (para Mónaco)
      */
+    velocidadAuto(auto) {
+        if (auto != null) {
+            return auto.velocidadMaxima;
+        } else {
+            return this.autosParticipantes.reduce((acc, auto) => acc += auto.velocidadMaxima,0) / this.autosParticipantes;
+        }
+    }
+
+    calcularNivelPiloto(piloto) {
+        return (piloto.habilidades.velocidad + piloto.habilidades.consistencia) / 200;
+    }
+
+    promedioFactorPiloto(auto) {
+        if (auto != null) {
+            return calcularNivelPiloto(auto.conductor);
+        } else {
+            return this.autosParticipantes.reduce((acc, auto) =>
+                acc += this.calcularNivelPiloto(auto.conductor),
+                0
+            ) / this.autosParticipantes.length;
+        }
+    }
+
+    obtenerNeumatico(auto) { 
+        if (auto != null) {
+            return auto.neumaticos;
+        } else {
+            let conteo = this.autosParticipantes.reduce((acc, auto) => {
+                acc[auto.neumaticos] = (acc[auto.neumaticos] || 0) + 1
+            }, {});
+
+            return Object.entries(conteo).reduce((max, actual) =>
+                actual[1] > max[1] ? actual : max
+            )[0];
+        }
+    }
+
+    obtenerFactorClima() {
+        let clima = this.condicionesClimaticas.clima;
+        return clima == "seco" ? 1.00 : clima == "mojado" ? 1.10 : clima == "lluvia" ? 1.15 : 0;
+    }
+
+    obtenerFactorDesgaste() {
+        return this.autosParticipantes
+    }
+
+    calcularTiempoVuelta(auto) {
+        let tiempoBase = (this.circuito.longitudKm / velocidadAuto(auto)) * 3600;
+        let factorPiloto = 1 - (promedioFactorPiloto(auto) * 0.1);
+        let factorNeumaticos = obtenerNeumatico(auto).factor;
+        let factorDesgaste = 1 + (obtenerNeumatico(auto).desgaste * 0.001);
+        let factorClima = this.obtenerFactorClima();  
+        
+
+        return tiempoBase * factorPiloto * factorNeumaticos * factorClima * factorDesgaste;
+    }
+
+    obtenerFactorCircuito() {
+        return this.circuito.longitudKm / 5;  
+    }
+
+    obtenerConsumoPorVuelta() {
+        let consumoBase = 2.5;
+
+        return consumoBase * this.obtenerFactorCircuito();
+    }
+
     calcularNumeroVueltas() {
-        // Implementar lógica para calcular el número de vueltas
+        let vueltasDuracion = (90*60) / this.calcularNumeroVueltas(null);
+        let vueltasCombustible = 110 / this.obtenerConsumoPorVuelta();
+        let vueltasNeumatico = 40 * this.obtenerFactorCircuito();
+
+        this.numeroVueltas = Math.min(vueltasDuracion, vueltasCombustible, vueltasNeumatico);
     }
 
     /**
@@ -80,8 +171,26 @@ class Carrera {
      * //   posicionesSalida: [{ piloto: "Leclerc", posicion: 1 }, ...]
      * // }
      */
+
+    realizarQualy(autos) {
+        let q = [];
+        for (let auto of autos) {
+            let piloto = {
+                piloto: auto.conductor,
+                tiempo: calcularTiempoVuelta()
+            };
+            q.push(piloto);
+        }
+
+        q.sort((a,b) => a.tiempo - b.tiempo);
+
+        return q;
+    }
+
     realizarClasificacion() {
-        // Implementar lógica para realizar la clasificación
+        let q1 = realizarQualy(this.autosParticipantes);
+        let q2 = realizarQualy(q1.slice(0, q1.length - 5));
+        let q3 = realizarQualy(q2.slice(0, q2.length - 5));
     }
 
     /**

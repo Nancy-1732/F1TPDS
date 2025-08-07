@@ -47,6 +47,43 @@ try {
     const piloto3 = new Piloto('Lewis Hamilton', 'Reino Unido', 0);
     const piloto4 = new Piloto('Valtteri Bottas', 'Finlandia', 0);
 
+   // Probar establecer habilidades
+console.log('\nPrueba establecer habilidades:');
+console.log(piloto1.establecerHabilidades({ velocidad: 80, consistencia: 85, agresividad: 90 }));
+
+// Probar puedeConducirAuto
+const autoPrueba = { estado: "en_carrera", requerimientoHabilidad: 70, marca: "Ferrari", modelo: "SF21", numero: 16 };
+console.log('\nPrueba puedeConducirAuto:');
+console.log(piloto1.puedeConducirAuto(autoPrueba)); // true o false
+
+// Probar conducirAuto
+console.log('\nPrueba conducirAuto:');
+console.log(piloto1.conducirAuto(autoPrueba));
+
+// Probar calcular rendimiento
+console.log('\nPrueba calcular rendimiento:');
+console.log(piloto1.calcularRendimiento({ clima: 'seco', temperatura: 28, humedad: 40 }));
+
+// Probar adaptar estilo de conducción
+console.log('\nPrueba adaptar estilo de conducción:');
+console.log(piloto4.adaptarEstiloConduccion({ clima: 'lluvia', estadoPista: 'mojada', visibilidad: 'baja' }));
+
+    // Probar registrar victoria
+console.log('\nPrueba registrar victoria:');
+console.log(piloto1.registrarVictoria());
+
+// Probar registrar podio
+console.log('\nPrueba registrar podio:');
+console.log(piloto2.registrarPodio(2));
+
+// Probar registrar vuelta rápida
+console.log('\nPrueba registrar vuelta rápida:');
+console.log(piloto3.registrarVueltaRapida());
+
+// Probar obtener estadísticas completas
+console.log('\nEstadísticas completas piloto1:');
+console.log(piloto1.obtenerEstadisticas());
+
     // Configurar habilidades de los pilotos
     [piloto1, piloto2, piloto3, piloto4].forEach(piloto => {
         piloto.establecerHabilidades({

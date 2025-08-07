@@ -94,6 +94,9 @@ class Circuito {
      */
     establecerCondicionesClimaticas(clima, temperatura, humedad) {
         // Implementar lógica para establecer condiciones climáticas
+        this.condicionesClimaticas.clima = clima;
+        this.condicionesClimaticas.temperatura = temperatura;
+        this.condicionesClimaticas.humedad = humedad;
     }
 
     /**
