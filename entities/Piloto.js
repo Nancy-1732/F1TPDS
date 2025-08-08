@@ -50,36 +50,25 @@ class Piloto {
      */
 
     establecerHabilidades(habilidades) {
-    const velocidad = habilidades.velocidad;
-    const consistencia = habilidades.consistencia;
-    const agresividad = habilidades.agresividad;
+        // Para validar cada habilidad según lógica de la consigna
+        for (const [nombre, valor] of Object.entries(habilidades)) {
+            if (typeof valor === 'number' && valor >= 0 && valor <= 100) {
+                this.habilidades[nombre] = valor; 
+            } else {
+                throw new Error(`La habilidad ${valor} debe estar entre 0 y 100`);
+            }
+        }
 
-    // Para validar cada habilidad según lógica de la consigna
-    if (typeof velocidad !== 'number' || velocidad < 0 || velocidad > 100) {
-        throw new Error('La habilidad velocidad debe estar entre 0 y 100');
+        // Calculamos el promedio
+        const habilidadesValues = Object.values(this.habilidades);
+        const nivelTotal = habilidadesValues.reduce((sum, habilidad) => sum + habilidad, 0) / habilidadesValues.length;
+        this.habilidad = nivelTotal;
+
+        return {
+            ...this.habilidades,
+            nivelTotal: nivelTotal
+        };
     }
-    if (typeof consistencia !== 'number' || consistencia < 0 || consistencia > 100) {
-        throw new Error('La habilidad consistencia debe estar entre 0 y 100');
-    }
-    if (typeof agresividad !== 'number' || agresividad < 0 || agresividad > 100) {
-        throw new Error('La habilidad agresividad debe estar entre 0 y 100');
-    }
-
-    this.habilidades.velocidad = velocidad;
-    this.habilidades.consistencia = consistencia;
-    this.habilidades.agresividad = agresividad;
-
-    // Calculamos el promedio
-    const nivelTotal = (velocidad + consistencia + agresividad) / 3;
-    this.habilidad = nivelTotal;
-
-    return {
-        velocidad: velocidad,
-        consistencia: consistencia,
-        agresividad: agresividad,
-        nivelTotal: nivelTotal
-    };
-}
 
 
     /**
@@ -97,19 +86,12 @@ class Piloto {
      * // Returns: true si cumple con los requisitos
      */
     puedeConducirAuto(auto) {
-    if (!auto || auto.estado !== "reserva") {
-        return false;
+        if (!auto?.disponibilidad) return false;
+        
+        return Object.entries(auto.requisitos).every(([habilidad, valorRequerido]) => {
+            return this.habilidades[habilidad] >= valorRequerido;
+        });
     }
-    // Verificamos si el piloto tiene suficiente habilidad
-    // Si el auto tiene un requerimiento de habilidad, lo comparamos
-    if (typeof auto.requerimientoHabilidad === "number") {
-        if (this.habilidad < auto.requerimientoHabilidad) {
-            return false;
-        }
-    }
-    // Si todo está bien, puede conducir
-    return true;
-}
 
 
     /**
@@ -130,31 +112,26 @@ class Piloto {
      * // }
      */
     conducirAuto(auto) {
-    // Verificamos si el piloto puede conducir el auto
-    if (!this.puedeConducirAuto(auto)) {
-        throw new Error("El piloto no puede conducir este auto.");
-    }
-    // Asignamos el auto al piloto
-    this.auto = auto;
-    // Asignamos el piloto al auto (si existe la propiedad)
-    if ('conductor' in auto) {
+        // Verificamos si el piloto puede conducir el auto
+        if (!this.puedeConducirAuto(auto)) {
+            throw new Error("El piloto no puede conducir este auto.");
+        }
+        // Asignamos el auto al piloto
+        this.auto = auto;
         auto.conductor = this;
-    }
-    // Cambiamos el estado del auto a "asignado"
-    if ('estado' in auto) {
-        auto.estado = "asignado";
-    }
-    // Guardamos el auto en el historial
-    this.autosConducidos.push(auto);
+        // Cambiamos el estado del auto a "asignado"
+        auto.disponibilidad = false;
+        // Guardamos el auto en el historial
+        this.autosConducidos.push(auto);
 
-    // Retornamos información de la asignación
-    return {
-        piloto: this.nombre,
-        auto: auto.marca + " " + auto.modelo,
-        numero: auto.numero,
-        estado: auto.estado
-    };
-}
+        // Retornamos información de la asignación
+        return {
+            piloto: this.nombre,
+            auto: auto.marca + " " + auto.modelo,
+            numero: auto.numero,
+            estado: "asignado"
+        };
+    }
 
     /**
      * Calcula el rendimiento del piloto según las condiciones
@@ -179,47 +156,47 @@ class Piloto {
      * // }
      */
 
-calcularRendimiento(condiciones) {
-    // Copiamos las habilidades actuales
-    let velocidad = this.habilidades.velocidad;
-    let consistencia = this.habilidades.consistencia;
-    let agresividad = this.habilidades.agresividad;
+    calcularRendimiento(condiciones) {
+        // Copiamos las habilidades actuales
+        let velocidad = this.habilidades.velocidad;
+        let consistencia = this.habilidades.consistencia;
+        let agresividad = this.habilidades.agresividad;
 
-    // Ajustamos según el clima
-    if (condiciones.clima === "lluvia") {
-        velocidad -= 5;
-        consistencia += 5;
-        agresividad -= 5;
-    } else if (condiciones.clima === "seco") {
-        velocidad += 2;
-        agresividad += 2;
+        // Ajustamos según el clima
+        if (condiciones.clima === "lluvia") {
+            velocidad -= 5;
+            consistencia += 5;
+            agresividad -= 5;
+        } else if (condiciones.clima === "seco") {
+            velocidad += 2;
+            agresividad += 2;
+        }
+
+        // Ajustamos según temperatura (ejemplo: si hace mucho calor, baja consistencia)
+        if (condiciones.temperatura > 30) {
+            consistencia -= 3;
+        }
+
+        // Ajustamos según humedad (ejemplo: mucha humedad, baja agresividad)
+        if (condiciones.humedad > 70) {
+            agresividad -= 2;
+        }
+
+        // Nos aseguramos que los valores estén entre 0 y 100
+        velocidad = Math.max(0, Math.min(100, velocidad));
+        consistencia = Math.max(0, Math.min(100, consistencia));
+        agresividad = Math.max(0, Math.min(100, agresividad));
+
+        // Calculamos el promedio
+        const rendimientoTotal = (velocidad + consistencia + agresividad) / 3;
+
+        return {
+            velocidad,
+            consistencia,
+            agresividad,
+            rendimientoTotal
+        };
     }
-
-    // Ajustamos según temperatura (ejemplo: si hace mucho calor, baja consistencia)
-    if (condiciones.temperatura > 30) {
-        consistencia -= 3;
-    }
-
-    // Ajustamos según humedad (ejemplo: mucha humedad, baja agresividad)
-    if (condiciones.humedad > 70) {
-        agresividad -= 2;
-    }
-
-    // Nos aseguramos que los valores estén entre 0 y 100
-    velocidad = Math.max(0, Math.min(100, velocidad));
-    consistencia = Math.max(0, Math.min(100, consistencia));
-    agresividad = Math.max(0, Math.min(100, agresividad));
-
-    // Calculamos el promedio
-    const rendimientoTotal = (velocidad + consistencia + agresividad) / 3;
-
-    return {
-        velocidad,
-        consistencia,
-        agresividad,
-        rendimientoTotal
-    };
-}
     /**
      * Adapta el estilo de conducción según las condiciones
      * @param {Object} condiciones - Condiciones actuales
@@ -241,36 +218,36 @@ calcularRendimiento(condiciones) {
      * //   }
      * // }
      */
-adaptarEstiloConduccion(condiciones) {
-    const estiloAnterior = this.estilo;
-    let ajustes = { agresividad: 0, consistencia: 0 };
+    adaptarEstiloConduccion(condiciones) {
+        const estiloAnterior = this.estilo;
+        let ajustes = { agresividad: 0, consistencia: 0 };
 
-    // Si hay lluvia, pista mojada o baja visibilidad, el piloto se vuelve más conservador
-    if (
-        condiciones.clima === "lluvia" ||
-        condiciones.estadoPista === "mojada" ||
-        condiciones.visibilidad === "baja"
-    ) {
-        this.estilo = "conservador";
-        ajustes.agresividad = -20;
-        ajustes.consistencia = +15;
-        this.habilidades.agresividad = Math.max(0, this.habilidades.agresividad + ajustes.agresividad);
-        this.habilidades.consistencia = Math.min(100, this.habilidades.consistencia + ajustes.consistencia);
-    } else {
-        // Si todo está normal, vuelve a agresivo
-        this.estilo = "agresivo";
-        ajustes.agresividad = +10;
-        ajustes.consistencia = -5;
-        this.habilidades.agresividad = Math.min(100, this.habilidades.agresividad + ajustes.agresividad);
-        this.habilidades.consistencia = Math.max(0, this.habilidades.consistencia + ajustes.consistencia);
+        // Si hay lluvia, pista mojada o baja visibilidad, el piloto se vuelve más conservador
+        if (
+            condiciones.clima === "lluvia" ||
+            condiciones.estadoPista === "mojada" ||
+            condiciones.visibilidad === "baja"
+        ) {
+            this.estilo = "conservador";
+            ajustes.agresividad = -20;
+            ajustes.consistencia = +15;
+            this.habilidades.agresividad = Math.max(0, this.habilidades.agresividad + ajustes.agresividad);
+            this.habilidades.consistencia = Math.min(100, this.habilidades.consistencia + ajustes.consistencia);
+        } else {
+            // Si todo está normal, vuelve a agresivo
+            this.estilo = "agresivo";
+            ajustes.agresividad = +10;
+            ajustes.consistencia = -5;
+            this.habilidades.agresividad = Math.min(100, this.habilidades.agresividad + ajustes.agresividad);
+            this.habilidades.consistencia = Math.max(0, this.habilidades.consistencia + ajustes.consistencia);
+        }
+
+        return {
+            estiloAnterior,
+            estiloNuevo: this.estilo,
+            ajustes
+        };
     }
-
-    return {
-        estiloAnterior,
-        estiloNuevo: this.estilo,
-        ajustes
-    };
-}
 
     /**
      * Registra una victoria del piloto
@@ -290,20 +267,20 @@ adaptarEstiloConduccion(condiciones) {
      * // }
      */
 
-registrarVictoria() {
-    this.victorias += 1;
-    this.puntosCampeonato += 25; // 25 puntos por victoria
-    this.estadisticas.victorias = this.victorias;
-    return {
-        victorias: this.victorias,
-        puntosCampeonato: this.puntosCampeonato,
-        estadisticas: {
+    registrarVictoria() {
+        this.victorias += 1;
+        this.puntosCampeonato += 25; // 25 puntos por victoria
+        this.estadisticas.victorias = this.victorias;
+        return {
             victorias: this.victorias,
-            podios: this.podios,
-            vueltasRapidas: this.vueltasRapidas
-        }
-    };
-}
+            puntosCampeonato: this.puntosCampeonato,
+            estadisticas: {
+                victorias: this.victorias,
+                podios: this.podios,
+                vueltasRapidas: this.vueltasRapidas
+            }
+        };
+    }
 
     /**
      * Registra un podio del piloto
@@ -323,27 +300,28 @@ registrarVictoria() {
      * //   }
      * // }
      */
-registrarPodio(posicion) {
-    if (posicion < 1 || posicion > 3) {
-        throw new Error("La posición de podio debe ser 1, 2 o 3.");
-    }
-    this.podios += 1;
-    let puntos = 0;
-    if (posicion === 1) puntos = 25;
-    else if (posicion === 2) puntos = 18;
-    else if (posicion === 3) puntos = 15;
-    this.puntosCampeonato += puntos;
-    this.estadisticas.podios = this.podios;
-    return {
-        podios: this.podios,
-        puntosCampeonato: this.puntosCampeonato,
-        estadisticas: {
-            victorias: this.victorias,
-            podios: this.podios,
-            vueltasRapidas: this.vueltasRapidas
+    registrarPodio(posicion) {
+        if (posicion < 1 || posicion > 3) {
+            throw new Error("La posición de podio debe ser 1, 2 o 3.");
         }
-    };
-}
+        this.podios += 1;
+        let puntosPodio = {
+            1: 25,
+            2: 18,
+            3: 15
+        };
+        this.puntosCampeonato += puntosPodio[posicion];
+        this.estadisticas.podios = this.podios;
+        return {
+            podios: this.podios,
+            puntosCampeonato: this.puntosCampeonato,
+            estadisticas: {
+                victorias: this.victorias,
+                podios: this.podios,
+                vueltasRapidas: this.vueltasRapidas
+            }
+        };
+    }
 
     /**
      * Registra una vuelta rápida del piloto
@@ -362,20 +340,20 @@ registrarPodio(posicion) {
      * //   }
      * // }
      */
-registrarVueltaRapida() {
-    this.vueltasRapidas += 1;
-    this.puntosCampeonato += 1; // 1 punto por vuelta rápida
-    this.estadisticas.vueltasRapidas = this.vueltasRapidas;
-    return {
-        vueltasRapidas: this.vueltasRapidas,
-        puntosCampeonato: this.puntosCampeonato,
-        estadisticas: {
-            victorias: this.victorias,
-            podios: this.podios,
-            vueltasRapidas: this.vueltasRapidas
-        }
-    };
-}
+    registrarVueltaRapida() {
+        this.vueltasRapidas += 1;
+        this.puntosCampeonato += 1; // 1 punto por vuelta rápida
+        this.estadisticas.vueltasRapidas = this.vueltasRapidas;
+        return {
+            vueltasRapidas: this.vueltasRapidas,
+            puntosCampeonato: this.puntosCampeonato,
+            estadisticas: {
+                victorias: this.victorias,
+                podios: this.podios,
+                vueltasRapidas: this.vueltasRapidas
+            }
+        };
+    }
 
     /**
      * Obtiene todas las estadísticas del piloto
@@ -404,22 +382,22 @@ registrarVueltaRapida() {
      * // }
      */
 
-obtenerEstadisticas() {
-    return {
-        general: {
-            victorias: this.victorias,
-            podios: this.podios,
-            vueltasRapidas: this.vueltasRapidas,
-            puntosCampeonato: this.puntosCampeonato
-        },
-        habilidades: { ...this.habilidades },
-        rendimiento: {
-            adelantamientos: this.adelantamientos,
-            errores: this.errores,
-            vueltasCompletadas: this.autosConducidos.length 
-        }
-    };
-  }
-}
+    obtenerEstadisticas() {
+        return {
+            general: {
+                victorias: this.victorias,
+                podios: this.podios,
+                vueltasRapidas: this.vueltasRapidas,
+                puntosCampeonato: this.puntosCampeonato
+            },
+            habilidades: { ...this.habilidades },
+            rendimiento: {
+                adelantamientos: this.adelantamientos,
+                errores: this.errores,
+                vueltasCompletadas: this.autosConducidos.length 
+            }
+        };
+    }
+    }
 
 module.exports = Piloto; 

@@ -1,5 +1,5 @@
 class Auto {
-    constructor(numero, marca, modelo, neumaticos, velocidadMaxima, combustible) {
+    constructor(numero, marca, modelo, neumaticos, velocidadMaxima, combustible, disponibilidad, velocidad, consistencia, agresividad) {
         this.numero = numero;
         this.marca = marca;
         this.modelo = modelo;
@@ -14,6 +14,12 @@ class Auto {
         this.kmRecorridos = 0;
         this.piezasNuevas = [];
         this.tiempoReparacion = 0;
+        this.disponibilidad = disponibilidad;
+        this.requisitos = {
+            velocidad: velocidad,
+            consistencia: consistencia,
+            agresividad: agresividad
+        }
     }
 
     /**
