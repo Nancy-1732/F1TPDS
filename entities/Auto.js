@@ -1,5 +1,5 @@
 class Auto {
-    constructor(numero, marca, modelo, neumaticos, velocidadMaxima, combustible, disponibilidad, velocidad, consistencia, agresividad) {
+    constructor(numero, marca, modelo, neumaticos, velocidadMaxima, combustible) {
         this.numero = numero;
         this.marca = marca;
         this.modelo = modelo;
@@ -14,12 +14,6 @@ class Auto {
         this.kmRecorridos = 0;
         this.piezasNuevas = [];
         this.tiempoReparacion = 0;
-        this.disponibilidad = disponibilidad;
-        this.requisitos = {
-            velocidad: velocidad,
-            consistencia: consistencia,
-            agresividad: agresividad
-        }
     }
 
     /**
@@ -40,7 +34,22 @@ class Auto {
      * });
      */
     configurarDesgasteInicial(configuracion) {
-        // Implementar lógica para configurar desgaste inicial
+        if(this.configTieneRangoCorrecto(configuracion, 0, 100)) {
+            this.desgasteNeumaticos = configuracion.neumaticos;
+            this.desgasteMotor = configuracion.motor;
+            this.combustible = configuracion.combustible;
+        } else {
+            throw new Error("ERROR: Hay elementos en la configuracion de desgaste fuera de rango");
+        }
+    }
+
+    configTieneRangoCorrecto(configuracion, min, max) {
+        let config = [];
+        config[0] = configuracion.neumaticos;
+        config[1] = configuracion.motor;
+        config[2] = configuracion.combustible;
+
+        return config.every((configDesgaste) => configDesgaste >= min && configDesgaste <= max);
     }
 
     /**
@@ -58,7 +67,17 @@ class Auto {
      * // Returns: true si cumple todas las condiciones
      */
     estaEnCondicionesOptimas() {
-        // Implementar lógica para determinar si el auto está en condiciones óptimas
+        let existeConductorEnCarrera = true;
+
+        if(this.estado == 'en_carrera' && this.conductor == null) {
+            existeConductorEnCarrera = false;
+        }
+        
+        return this.tieneDesgasteOptimo() && existeConductorEnCarrera;
+    }
+
+    tieneDesgasteOptimo() {   //NO CALCULE PORCENTAJES, 0 A 100 = 0% A 100%
+        return this.desgasteNeumaticos < 30 && this.desgasteMotor < 40 && this.combustible > 20;
     }
 
     /**
@@ -73,7 +92,22 @@ class Auto {
      * // Returns: { tipoAnterior: "blandos", tipoNuevo: "duros", desgasteReseteado: true }
      */
     cambiarNeumaticos(tipoNeumaticos) {
-        // Implementar lógica para cambiar neumáticos
+        let infoNeumaticos = {tipoAnterior: this.neumaticos, tipoNuevo: "-", desgasteReseteado: false};
+
+        if(this.existeTipoNeumaticos(tipoNeumaticos)) {
+            this.neumaticos = tipoNeumaticos;
+            this.desgasteNeumaticos = 0;
+            infoNeumaticos.tipoNuevo = tipoNeumaticos;
+            infoNeumaticos.desgasteReseteado = true;
+        } else {
+            console.log("ERROR: Tipo de neumatico invalido");
+        }
+
+        return infoNeumaticos;
+    }
+
+    existeTipoNeumaticos(tipoNeumaticos) {
+        return tipoNeumaticos == 'blandos' || tipoNeumaticos == 'medios' || tipoNeumaticos == 'duros';
     }
 
     /**
@@ -88,7 +122,19 @@ class Auto {
      * // Returns: { combustibleAnterior: 50, combustibleNuevo: 80 }
      */
     repostarCombustible(cantidad) {
-        // Implementar lógica para repostar combustible
+        let combustibleAnterior = this.combustible;
+
+        if(cantidad <= 100) {
+            this.combustible += cantidad;
+            if(this.combustible > 100) {
+                this.combustible = 100;
+                console.log("El tanque esta al maximo!")
+            };
+        } else {
+            console.log("ERROR: ingrese una cantidad de combustible entre 0 y 100")
+        }
+
+        return {combustibleAnterior: combustibleAnterior, combustibleNuevo: this.combustible}
     }
 
     /**
@@ -107,7 +153,9 @@ class Auto {
      * // Returns: { piezaInstalada: true, estadoActualizado: "desarrollo" }
      */
     instalarPiezaNueva(pieza) {
-        // Implementar lógica para instalar una nueva pieza
+        this.piezasNuevas.push(pieza);
+        this.estado = 'desarrollo';
+        return {piezaInstalada: true, estadoActualizado: this.estado};
     }
 
     /**
@@ -128,7 +176,17 @@ class Auto {
      * // Returns: { desgasteNeumaticos: 2.5, desgasteMotor: 1.2, combustibleConsumido: 1.8 }
      */
     calcularDesgaste(vuelta) {
-        // Implementar lógica para calcular el desgaste en una vuelta
+        let diferenciaVelocidades = vuelta.velocidad / this.velocidadMaxima;
+
+        let desgasteNeumaticos = diferenciaVelocidades;
+        if (vuelta.condiciones.temperatura > 35) desgasteNeumaticos *= 1.15;
+
+        let desgasteMotor = diferenciaVelocidades;
+        if(vuelta.condiciones.humedad > 60) desgasteMotor *= 1.10;
+
+        let combustibleConsumido = diferenciaVelocidades;
+
+        return {desgasteNeumaticos: desgasteNeumaticos, desgasteMotor: desgasteMotor, combustibleConsumido: combustibleConsumido};
     }
 
     /**
@@ -147,7 +205,14 @@ class Auto {
      * // }
      */
     realizarPitStop(tipoNeumaticos, combustible) {
-        // Implementar lógica para realizar un pit stop
+        this.estado = 'en_boxes';
+        this.cambiarNeumaticos(tipoNeumaticos);
+        this.repostarCombustible(combustible);
+
+        //- Cambio de neumáticos: 2.5 segundos, Repostaje: 1.8 segundos, Entrada/Salida de boxes: 1.0 segundos
+        let tiempoPitStop = 2.5 + 1.8 + 1.0;
+
+        return {estado: this.estado, operaciones: ['cambio_neumaticos', 'repostaje'], tiempoTotal: tiempoPitStop};
     }
 
     /**
@@ -165,7 +230,7 @@ class Auto {
      * // }
      */
     obtenerEstadisticasDesgaste() {
-        // Implementar lógica para obtener estadísticas de desgaste
+        return {desgasteNeumaticos: this.desgasteNeumaticos, nivelCombustible: this.combustible, estadoMotor: this.desgasteMotor, estado: this.estado};
     }
 }
 
