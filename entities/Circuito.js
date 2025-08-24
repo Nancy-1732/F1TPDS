@@ -31,8 +31,28 @@ class Circuito {
      * const esDesafiante = circuito.esDesafiante();
      * // Returns: true
      */
+
+    promedioDificultad() {
+        let valores = { baja: 1, media: 2, alta: 3 };
+
+        this.curvas.reduce((suma, curva) => suma + valores[curva.dificultad], 0);
+        const promedio = suma / this.curvas.length;
+
+        let dificultadPromedio;
+        if (promedio <= 1.5) {
+            dificultadPromedio = "baja";
+        } else if (promedio <= 2.5) {
+            dificultadPromedio = "media";
+        } else {
+            dificultadPromedio = "alta";
+        }
+
+        return dificultadPromedio;
+    }
+
     esDesafiante() {
         // Implementar lógica para determinar si el circuito es desafiante
+        return this.curvas.length > 10 && this.zonasDRS.length >= 2 && this.longitudKm > 5 && this.promedioDificultad() === "alta";
     }
 
     /**
@@ -54,6 +74,13 @@ class Circuito {
      */
     agregarCurva(nombre, velocidadMaxima, dificultad) {
         // Implementar lógica para agregar una curva al circuito
+        this.curvas.push({ nombre, velocidadMaxima, dificultad });
+        return {
+            nombre,
+            velocidadMaxima,
+            dificultad,
+            numeroCurva: this.curvas.length
+        };
     }
 
     /**
@@ -73,6 +100,12 @@ class Circuito {
      */
     agregarZonaDRS(nombre, longitud) {
         // Implementar lógica para agregar una zona DRS
+        this.zonasDRS.push({ nombre, longitud });
+        return {
+            nombre,
+            longitud,
+            numeroZona: this.zonasDRS.length
+        };
     }
 
     /**
@@ -97,6 +130,7 @@ class Circuito {
         this.condicionesClimaticas.clima = clima;
         this.condicionesClimaticas.temperatura = temperatura;
         this.condicionesClimaticas.humedad = humedad;
+        
     }
 
     /**
@@ -117,6 +151,20 @@ class Circuito {
      */
     actualizarRecordVuelta(tiempo, piloto) {
         // Implementar lógica para actualizar el record de vuelta
+        let esNuevoRecord = false;
+        if (tiempo < this.recordVuelta.tiempo) {
+            this.recordVuelta.tiempo = tiempo;
+            this.recordVuelta.piloto = piloto;
+            this.recordVuelta.fecha = new Date().toISOString().split('T')[0];
+            esNuevoRecord = true;
+        } 
+
+        return {
+            tiempo,
+            piloto,
+            fecha: this.recordVuelta.fecha,
+            esNuevoRecord: esNuevoRecord
+        };
     }
 
     /**
@@ -144,6 +192,13 @@ class Circuito {
      */
     obtenerEstadisticasCircuito() {
         // Implementar lógica para obtener estadísticas del circuito
+        return {
+            numeroCurvas: this.curvas.length,
+            zonasDRS: this.zonasDRS.length,
+            recordVuelta: this.recordVuelta,
+            condicionesActuales: this.condicionesClimaticas,
+            dificultadPromedio: this.promedioDificultad()
+        };
     }
 }
 
